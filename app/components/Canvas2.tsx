@@ -1,136 +1,153 @@
-import { useEffect, useRef } from "react"
-import { BaseShape } from "./canvas"
+import { useEffect, useRef, useState } from "react"
+import {
+  BaseShape,
+  DraggableBaseShape,
+  DrawableShapes,
+  NonDraggableBaseShape,
+  clear,
+  drawShapes,
+  isMouseInShape,
+} from "./canvas"
+import { match, P } from "ts-pattern"
+
+// shapes
+const initialShapes: DraggableBaseShape[] = [
+  {
+    id: 1,
+    x: 0,
+    y: 0,
+    width: 30,
+    height: 30,
+    color: "green",
+    isDragging: false,
+    isDraggable: true,
+  },
+]
+
+const gridLines: NonDraggableBaseShape[] = [
+  {
+    id: 2,
+    x: 100,
+    y: 75,
+    width: 1,
+    height: 100,
+    color: "red",
+    isDraggable: false,
+  },
+  {
+    id: 3,
+    x: 150,
+    y: 75,
+    width: 1,
+    height: 100,
+    color: "red",
+    isDraggable: false,
+  },
+  {
+    id: 4,
+    x: 75,
+    y: 100,
+    width: 100,
+    height: 1,
+    color: "red",
+    isDraggable: false,
+  },
+  {
+    id: 5,
+    x: 75,
+    y: 150,
+    width: 100,
+    height: 1,
+    color: "red",
+    isDraggable: false,
+  },
+]
 
 export const Canvas2 = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [shapes, setShapes] = useState<DrawableShapes[]>([
+    ...initialShapes,
+    ...gridLines,
+  ])
+  const [draggingId, setDraggingId] = useState<number | null>(null)
+  // offsetRef is needed otherwise if user clicks on shape, then shape would jump
+  // such that it's top left corner is mouse position because a shape's position
+  // is based on it's top left corner
+  // ie. offsetRef is the mouse's position inside the shape
+  const offsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
 
+  // Draw all boxes
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const context: CanvasRenderingContext2D | null = canvas.getContext("2d")
+    const context = canvas.getContext("2d")
     if (!context) return
 
-    // canvas references
-    const boundingBox = canvas.getBoundingClientRect()
-    const offsetX = boundingBox.left
-    const offsetY = boundingBox.top
-    const canvasWidth = canvas.width
-    const canvasHeight = canvas.height
+    clear(context, canvas.width, canvas.height)
+    drawShapes(context, shapes, canvas.width, canvas.height)
+  }, [shapes])
 
-    // drag and drop control varaibles
-    let startX = 0
-    let startY = 0
-    let canDrag = false
+  const getMousePositionOnCanvas = (
+    event: React.MouseEvent,
+  ): { x: number; y: number } => {
+    const rect = canvasRef.current?.getBoundingClientRect()
 
-    // shapes
-    const shapes: BaseShape[] = []
-    shapes.push({
-      x: 10,
-      y: 10,
-      width: 30,
-      height: 30,
-      color: "green",
-      isDragging: false,
-    })
-
-    const clear = (): void => {
-      context.clearRect(0, 0, canvasWidth, canvasHeight)
+    // since bounding box could be anywhere on page we subtract the bounding boxes
+    // dimensions from the mouse's global position to get the mouse's position
+    // inside the bounding box
+    return {
+      x: event.clientX - (rect?.left ?? 0),
+      y: event.clientY - (rect?.top ?? 0),
     }
+  }
 
-    const drawShapes = (): void => {
-      clear()
-      for (const shape of shapes) {
-        context.fillStyle = shape.color
-        context.fillRect(shape.x, shape.y, shape.width, shape.height)
+  const handleMouseDown = (event: React.MouseEvent): void => {
+    const { x, y } = getMousePositionOnCanvas(event)
+
+    for (const shape of shapes) {
+      if (shape.isDraggable && isMouseInShape(x, y, shape)) {
+        setDraggingId(shape.id)
+        offsetRef.current = { x: x - shape.x, y: y - shape.y }
+        return
       }
     }
+  }
 
-    const isMouseInShape = (
-      x: number,
-      y: number,
-      shape: BaseShape,
-    ): boolean => {
-      const shapeLeft = shape.x
-      const shapeRight = shape.x + shape.width
-      const shapeTop = shape.y
-      const shapeBottom = shape.y + shape.height
+  const handleMouseMove = (event: React.MouseEvent): void => {
+    if (draggingId == null) return
 
-      return x > shapeLeft && x < shapeRight && y > shapeTop && y < shapeBottom
-    }
+    const { x, y } = getMousePositionOnCanvas(event)
 
-    const mouseDown = (event: MouseEvent): void => {
-      event.preventDefault()
-      event.stopPropagation()
+    setShapes((prev) =>
+      prev.map((shape) =>
+        shape.id === draggingId
+          ? {
+              ...shape,
+              x: x - offsetRef.current.x,
+              y: y - offsetRef.current.y,
+            }
+          : shape,
+      ),
+    )
+  }
 
-      const mouseX = event.clientX
-      const mouseY = event.clientY
-
-      canDrag = false
-
-      for (const shape of shapes) {
-        if (isMouseInShape(startX, startY, shape)) {
-          canDrag = true
-          shape.isDragging = true
-        }
-      }
-
-      startX = mouseX
-      startY = mouseY
-    }
-
-    const mouseUp = (event: MouseEvent): void => {
-      event.preventDefault()
-      event.stopPropagation()
-
-      canDrag = false
-      for (const shape of shapes) {
-        shape.isDragging = false
-      }
-    }
-
-    const mouseMove = (event: MouseEvent): void => {
-      if (!canDrag) return
-
-      event.preventDefault()
-      event.stopPropagation()
-
-      // get the current mouse position
-      const mouseX = event.clientX - offsetX
-      const mouseY = event.clientY - offsetY
-
-      // calculate the distance the mouse has moved since the last mousemove
-      const dx = mouseX - startX
-      const dy = mouseY - startY
-
-      for (const shape of shapes) {
-        if (shape.isDragging) {
-          shape.x += dx
-          shape.y += dy
-        }
-      }
-
-      drawShapes()
-
-      startX = mouseX
-      startY = mouseY
-    }
-
-    drawShapes()
-
-    // mouse event functions
-    canvas.onmousedown = mouseDown
-    canvas.onmouseup = mouseUp
-    canvas.onmouseout = mouseUp
-    canvas.onmousemove = mouseMove
-  }, [])
+  const handleMouseUp = (event: React.MouseEvent): void => {
+    event.preventDefault()
+    event.stopPropagation()
+    setDraggingId(null)
+  }
 
   return (
     <canvas
       ref={canvasRef}
       width={300}
       height={300}
-      className="border border-green-600"
+      className="border border-green-600 mt-5 ml-10"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseOut={handleMouseUp}
+      onMouseUp={handleMouseUp}
     />
   )
 }
