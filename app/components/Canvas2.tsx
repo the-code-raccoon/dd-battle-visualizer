@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react"
 import {
-  BaseShape,
   DraggableBaseShape,
   DrawableShapes,
   NonDraggableBaseShape,
@@ -8,60 +7,45 @@ import {
   drawShapes,
   isMouseInShape,
 } from "./canvas"
-import { match, P } from "ts-pattern"
 
 // shapes
 const initialShapes: DraggableBaseShape[] = [
   {
-    id: 1,
+    id: 100,
     x: 0,
     y: 0,
-    width: 30,
-    height: 30,
+    width: 50,
+    height: 50,
     color: "green",
     isDragging: false,
     isDraggable: true,
   },
 ]
 
-const gridLines: NonDraggableBaseShape[] = [
-  {
-    id: 2,
-    x: 100,
-    y: 75,
-    width: 1,
-    height: 100,
-    color: "red",
-    isDraggable: false,
-  },
-  {
-    id: 3,
-    x: 150,
-    y: 75,
-    width: 1,
-    height: 100,
-    color: "red",
-    isDraggable: false,
-  },
-  {
-    id: 4,
-    x: 75,
-    y: 100,
-    width: 100,
-    height: 1,
-    color: "red",
-    isDraggable: false,
-  },
-  {
-    id: 5,
-    x: 75,
-    y: 150,
-    width: 100,
-    height: 1,
-    color: "red",
-    isDraggable: false,
-  },
-]
+const gridLines: NonDraggableBaseShape[] = []
+
+for (let i = 0; i < 20; i += 2) {
+  gridLines.push(
+    {
+      id: i,
+      x: 0,
+      y: i * 25,
+      width: 1000,
+      height: 1,
+      color: "red",
+      isDraggable: false,
+    },
+    {
+      id: i + 1,
+      x: i * 25,
+      y: 0,
+      width: 1,
+      height: 1000,
+      color: "red",
+      isDraggable: false,
+    },
+  )
+}
 
 export const Canvas2 = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
