@@ -80,3 +80,12 @@ export const isMouseInShape = (
 
   return x >= shapeLeft && x <= shapeRight && y >= shapeTop && y <= shapeBottom
 }
+
+export const snapCanvasObjectToGrid = (
+  shapeX: number,
+  shapeY: number,
+  gridSize: number,
+): { x: number; y: number } => ({
+  x: Math.round(shapeX / gridSize) * gridSize,
+  y: Math.round(shapeY / gridSize) * gridSize,
+})
