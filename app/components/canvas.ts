@@ -89,3 +89,82 @@ export const snapCanvasObjectToGrid = (
   x: Math.round(shapeX / gridSize) * gridSize,
   y: Math.round(shapeY / gridSize) * gridSize,
 })
+
+export type MapDimensions = {
+  width: number
+  height: number
+  numXGridSquares: number
+  numYGridSquares: number
+  gridSquareSize: number
+}
+
+export const generateGridLines = (
+  gridSize: number,
+  numXGridSquares: number,
+  numYGridSquares: number,
+): NonDraggableShape[] => {
+  const gridLines: NonDraggableShape[] = []
+
+  // generate horizontalgrid lines
+  for (let i = 0; i < numXGridSquares + 1; i++) {
+    gridLines.push({
+      id: i,
+      x: 0,
+      y: i * gridSize,
+      width: 1000,
+      height: 1,
+      color: "red",
+      isDraggable: false,
+    })
+  }
+
+  // generate vertical grid lines
+  for (let i = 0; i < numYGridSquares + 1; i++) {
+    gridLines.push({
+      id: i,
+      x: i * gridSize,
+      y: 0,
+      height: 1000,
+      width: 1,
+      color: "red",
+      isDraggable: false,
+    })
+  }
+
+  return gridLines
+}
+
+export const generateTestShapes = (gridSize: number): DraggableShape[] => {
+  return [
+    // {
+    //   id: 104,
+    //   x: 250,
+    //   y: 250,
+    //   width: GRID_SIZE,
+    //   height: GRID_SIZE,
+    //   color: "green",
+    //   isDragging: false,
+    //   isDraggable: true,
+    // },
+    //   {
+    //     id: 100,
+    //     x: 0,
+    //     y: 0,
+    //     width: GRID_SIZE * 2,
+    //     height: GRID_SIZE * 2,
+    //     color: "green",
+    //     isDragging: false,
+    //     isDraggable: true,
+    //   },
+    {
+      id: 101,
+      x: 0,
+      y: 0,
+      width: gridSize * 3,
+      height: gridSize * 3,
+      color: "blue",
+      isDragging: false,
+      isDraggable: true,
+    },
+  ]
+}
