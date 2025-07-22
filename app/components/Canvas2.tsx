@@ -1,35 +1,36 @@
 import { useEffect, useRef, useState } from "react"
 import {
-  DraggableBaseShape,
-  DrawableShapes,
-  NonDraggableBaseShape,
-  clear,
+  DrawableObjects,
+  NonDraggableShape,
+  clearCanvas,
   drawShapes,
   isMouseInShape,
+  DraggableShape,
 } from "./canvas"
 
-// shapes
-const initialShapes: DraggableBaseShape[] = [
+const GRID_SIZE = 50
+
+const initialShapes: DraggableShape[] = [
   {
     id: 100,
     x: 0,
     y: 0,
-    width: 50,
-    height: 50,
+    width: GRID_SIZE * 2,
+    height: GRID_SIZE * 2,
     color: "green",
     isDragging: false,
     isDraggable: true,
   },
 ]
 
-const gridLines: NonDraggableBaseShape[] = []
+const gridLines: NonDraggableShape[] = []
 
 for (let i = 0; i < 20; i += 2) {
   gridLines.push(
     {
       id: i,
       x: 0,
-      y: i * 25,
+      y: i * (GRID_SIZE / 2),
       width: 1000,
       height: 1,
       color: "red",
@@ -37,7 +38,7 @@ for (let i = 0; i < 20; i += 2) {
     },
     {
       id: i + 1,
-      x: i * 25,
+      x: i * (GRID_SIZE / 2),
       y: 0,
       width: 1,
       height: 1000,
@@ -49,7 +50,7 @@ for (let i = 0; i < 20; i += 2) {
 
 export const Canvas2 = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [shapes, setShapes] = useState<DrawableShapes[]>([
+  const [shapes, setShapes] = useState<DrawableObjects[]>([
     ...initialShapes,
     ...gridLines,
   ])
@@ -60,6 +61,31 @@ export const Canvas2 = () => {
   // ie. offsetRef is the mouse's position inside the shape
   const offsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
 
+  // load all images
+  useEffect(() => {
+    const imageUrls = ["./test-avatar-circle.png"]
+    for (const url of imageUrls) {
+      const image = new Image()
+      image.src = url
+      image.onload = () => {
+        setShapes((prev) => [
+          ...prev,
+          {
+            id: 200,
+            x: 0,
+            y: 50,
+            width: GRID_SIZE,
+            height: GRID_SIZE,
+            color: "",
+            image,
+            isDragging: false,
+            isDraggable: true,
+          },
+        ])
+      }
+    }
+  }, [])
+
   // Draw all boxes
   useEffect(() => {
     const canvas = canvasRef.current
@@ -68,8 +94,9 @@ export const Canvas2 = () => {
     const context = canvas.getContext("2d")
     if (!context) return
 
-    clear(context, canvas.width, canvas.height)
-    drawShapes(context, shapes, canvas.width, canvas.height)
+    clearCanvas(context, canvas.width, canvas.height)
+    drawShapes(context, shapes)
+    // drawImages(context, [], canvas.width, canvas.height)
   }, [shapes])
 
   const getMousePositionOnCanvas = (
@@ -119,6 +146,25 @@ export const Canvas2 = () => {
   const handleMouseUp = (event: React.MouseEvent): void => {
     event.preventDefault()
     event.stopPropagation()
+
+    const { x, y } = getMousePositionOnCanvas(event)
+
+    // finds the closest grid square to snap to
+    const closeGridX = x - (x % GRID_SIZE)
+    const closeGridY = y - (y % GRID_SIZE)
+
+    setShapes((prev) =>
+      prev.map((shape) =>
+        shape.id === draggingId
+          ? {
+              ...shape,
+              x: closeGridX,
+              y: closeGridY,
+            }
+          : shape,
+      ),
+    )
+
     setDraggingId(null)
   }
 

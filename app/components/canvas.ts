@@ -1,38 +1,66 @@
-export type BaseShape = {
+import { match, P } from "ts-pattern"
+
+export type CanvasObject = {
   id: number
   x: number
   y: number
   width: number
   height: number
-  color: string
   isDraggable: boolean
 }
 
-export type DraggableBaseShape = BaseShape & {
+export type Shape = CanvasObject & {
+  color: string
+}
+
+export type Image = CanvasObject & {
+  image: HTMLImageElement
+}
+
+export type DraggableObject = {
   isDragging: boolean
   isDraggable: true
 }
 
-export type NonDraggableBaseShape = BaseShape & {
+export type NonDraggableObject = {
   isDraggable: false
 }
 
-export type DrawableShapes = DraggableBaseShape | NonDraggableBaseShape
+export type DraggableShape = DraggableObject & Shape
+
+export type NonDraggableShape = NonDraggableObject & Shape
+
+export type DraggableImage = DraggableObject & Image
+
+export type DrawableObjects =
+  | DraggableShape
+  | NonDraggableShape
+  | DraggableImage
 
 export const drawShapes = (
   context: CanvasRenderingContext2D,
-  shapes: BaseShape[],
-  canvasWidth: number,
-  canvasHeight: number,
+  shapes: DrawableObjects[],
 ): void => {
-  context.clearRect(0, 0, canvasWidth, canvasHeight)
   for (const shape of shapes) {
-    context.fillStyle = shape.color
-    context.fillRect(shape.x, shape.y, shape.width, shape.height)
+    match(shape)
+      .with({ image: {} }, (image) => {
+        context.drawImage(
+          image.image,
+          image.x,
+          image.y,
+          image.width,
+          image.height,
+        )
+      })
+      .with({ color: P.string }, (shape) => {
+        context.fillStyle = shape.color
+        context.fillRect(shape.x, shape.y, shape.width, shape.height)
+      })
+      .exhaustive()
   }
 }
 
-export const clear = (
+export const clearCanvas = (
   context: CanvasRenderingContext2D,
   canvasWidth: number,
   canvasHeight: number,
@@ -43,7 +71,7 @@ export const clear = (
 export const isMouseInShape = (
   x: number,
   y: number,
-  shape: BaseShape,
+  shape: CanvasObject,
 ): boolean => {
   const shapeLeft = shape.x
   const shapeRight = shape.x + shape.width

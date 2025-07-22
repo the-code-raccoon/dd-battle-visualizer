@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { BaseShape } from "./canvas"
+import { CanvasObject } from "./canvas"
 
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -11,7 +11,7 @@ export const Canvas = () => {
     const context: CanvasRenderingContext2D | null = canvas.getContext("2d")
     if (!context) return
 
-    const shapes: BaseShape[] = []
+    const shapes: CanvasObject[] = []
     shapes.push({ x: 10, y: 10, width: 150, height: 100, color: "green" })
 
     const drawShapes = (): void => {
@@ -31,7 +31,7 @@ export const Canvas = () => {
     const isMouseInShape = (
       x: number,
       y: number,
-      shape: BaseShape,
+      shape: CanvasObject,
     ): boolean => {
       const shapeLeft = shape.x
       const shapeRight = shape.x + shape.width
