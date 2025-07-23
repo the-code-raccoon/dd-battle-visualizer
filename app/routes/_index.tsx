@@ -1,7 +1,7 @@
 import type { MetaFunction } from "@remix-run/node"
 import React, { useState } from "react"
-import { MapDimensions } from "~/components/canvas"
-import { Canvas2 } from "~/components/Canvas2"
+import { MapDimensions } from "~/types/canvas"
+import { Canvas } from "~/components/Canvas"
 
 export const meta: MetaFunction = () => {
   return [
@@ -42,8 +42,7 @@ export default function Index() {
           onChange={handleInput}
         />
       ))}
-      {/* <Canvas /> */}
-      <Canvas2 mapDimensions={mapDimensions} />
+      <Canvas mapDimensions={mapDimensions} />
     </div>
   )
 }
